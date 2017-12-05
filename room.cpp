@@ -9,4 +9,25 @@
 
 using namespace std;
 
-// room::room();
+Room::Room(char *Name, char *Info) {
+	name = Name;
+	info = Info;
+}
+
+void Room::setExit(int direction, Room *exit) {
+
+}
+
+void Room::setInit() {
+
+}
+
+const char *Room::getName() const {
+	return name;
+}
+
+const char *Room::getInfo() const {
+	return info;
+}
+
+
