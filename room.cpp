@@ -12,14 +12,18 @@ using namespace std;
 Room::Room(char *Name, char *Info) {
 	name = Name;
 	info = Info;
+	exits[0] = NULL;
+	exits[1] = NULL;
+	exits[2] = NULL;
+	exits[3] = NULL;
 }
 
-void Room::setExit(int direction, Room *exit) {
-
+void Room::setExit(int direction, const Room *exit) {
+	exits[direction] = exit;
 }
 
-void Room::setInit() {
-
+const Room *Room::getExit(int direction) const {
+	return exits[direction];
 }
 
 const char *Room::getName() const {

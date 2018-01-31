@@ -13,12 +13,10 @@ using namespace std;
 class Room {
 	public:
 		// constructor
-		Room(char *, char *);
-		// i need to initialize my room and stuff
-		void setInit();
+		Room(char *name, char *info);
 		// setting a exit to a room needs a direction and another room to exit to
-		void setExit(int direction, Room *exit);
-		
+		void setExit(int direction, const Room *exit);
+		const Room *getExit(int direction) const;
 		// these won't change the room object
 		const char *getName() const;
 		const char *getInfo() const;
@@ -26,5 +24,6 @@ class Room {
 		// change pointer not original
 		const char *name;
 		const char *info;
+		const Room *exits[4];
 		
 };

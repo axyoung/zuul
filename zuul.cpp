@@ -2,38 +2,16 @@
  * C++ Galbriath P6
  * Zuul: Pokemon
  * This program will create text based adventure game.
- * Last updated: 12/4/2017
+ * Last updated: 1/30/2018 - complete
  */
 
-#include <iostream>
-#include <vector>
-#include <cstring>
-#include "room.h"
+#include "zuul.h"
 
 using namespace std;
 
-// need struct of items
-struct Item {
-	const char *name;
-	const char *description;
-	bool carried = true;
-	Room *location;
-};
-
-void go();
-void get();
-void drop();
-void quit();
-
-// I will need a vector of items
-void items(char *name, vector<Item> inventory);
-
-// I will need a class of rooms and a vector of room pointers
-
-int main() {
-	vector<Item> inventory;
-	vector<Room*> room;
-
+// constructor
+Zuul::Zuul() {
+	
 	// first I need to add in all my room pointers
 	Room *NewBark = new Room((char*)"New Bark Town", (char*)"A town where the wind blows and tells of impending change.");
 	Room *Cherrygrove = new Room((char*)"Cherrygrove City", (char*)"A city where you can smell small flowers and a sea breeze.");
@@ -100,15 +78,14 @@ int main() {
 	Mahogany -> setExit(3, Mountain);
 	Mahogany -> setExit(0, Lake);
 	Lake -> setExit(2, Mahogany);
-	Mahogany -> setExit(3, Path);
-	Path -> setExit(1, Mahogany);
+	Mahogany -> setExit(1, Path);
+	Path -> setExit(3, Mahogany);
 	Path -> setExit(2, Blackthorn);
 	Blackthorn -> setExit(0, Path);
 	
 	// a vector with all my rooms
 	room.push_back(NewBark);
 	room.push_back(Cherrygrove);
-	room.push_back(Violet);
 	room.push_back(Violet);
 	room.push_back(Azalea);
 	room.push_back(Goldenrod);
@@ -130,99 +107,252 @@ int main() {
 	// room.push_back(inventory);
 
 	// next I need to add all my items
-	Item zephyr;
-	zephyr.name = "Zephyr Badge";
-	zephyr.description = "You have defeated gym leader Falkner";
-	zephyr.carried = false;
-	Item hive;
-	hive.name = "Hive Badge";
-	hive.description = "You have defeated gym leader Bugsy";
-	hive.carried = false;
-	Item plain;
-	plain.name = "Plain Badge";
-	plain.description = "You have defeated gym leader Whitney";
-	plain.carried = false;
-	Item fog;
-	fog.name = "Fog Badge";
-	fog.description = "You have defeated gym leader Morty";
-	fog.carried = false;
-	Item storm;
-	storm.name = "Storm Badge";
-	storm.description = "You have defeated gym leader Chuck";
-	storm.carried = false;
-	Item mineral;
-	mineral.name = "Mineral Badge";
-	mineral.description = "You have defeated gym leader Jasmine";
-	mineral.carried = false;
-	Item glacier;
-	glacier.name = "Glacier Badge";
-	glacier.description = "You have defeated gym leader Pryce";
-	glacier.carried = false;
-	Item rising;
-	rising.name = "Rising Badge";
-	rising.description = "You have defeated gym leader Clair";
-	rising.carried = false;
+	Item *zephyr = new Item;
+	zephyr->name = "Zephyr_Badge";
+	zephyr->description = "You have defeated gym leader Falkner";
+	zephyr->room = Violet;
+	Item *hive = new Item;
+	hive->name = "Hive_Badge";
+	hive->description = "You have defeated gym leader Bugsy";
+	hive->room = Azalea;
+	Item *plain = new Item;
+	plain->name = "Plain_Badge";
+	plain->description = "You have defeated gym leader Whitney";
+	plain->room = Goldenrod;
+	Item *fog = new Item;
+	fog->name = "Fog_Badge";
+	fog->description = "You have defeated gym leader Morty";
+	fog->room = Ecruteak;
+	Item *storm = new Item;
+	storm->name = "Storm_Badge";
+	storm->description = "You have defeated gym leader Chuck";
+	storm->room = Cianwood;
+	Item *mineral = new Item;
+	mineral->name = "Mineral_Badge";
+	mineral->description = "You have defeated gym leader Jasmine";
+	mineral->room = Olivine;
+	Item *glacier = new Item;
+	glacier->name = "Glacier_Badge";
+	glacier->description = "You have defeated gym leader Pryce";
+	glacier->room = Mahogany;
+	Item *rising = new Item;
+	rising->name = "Rising_Badge";
+	rising->description = "You have defeated gym leader Clair";
+	rising->room = Blackthorn;
 	
+	// here i add all my items to my inventory vector
+	inventory.push_back(zephyr);
+	inventory.push_back(hive);
+	inventory.push_back(plain);
+	inventory.push_back(fog);
+	inventory.push_back(storm);
+	inventory.push_back(mineral);
+	inventory.push_back(glacier);
+	inventory.push_back(rising);
+}
 
-	// need to play the game with win conditions
-	cout << "Welcome to the world of Zuul!" << endl;
-	cout << "This is a text-based adventure game based on Pokemon" << endl;
-	cout << "You can win by collecting all 8 badges and reaching the pokemon league" << endl;
-	cout << "Enjoy your stay! - Alex Young" << endl;
+// tearing down the vectors for when i quit
+Zuul::~Zuul() {
+	for (unsigned i = 0; i < inventory.size(); i++) {
+		delete inventory[i];
+		inventory[i] = NULL;
+	}
 	
+	for (unsigned i = 0; i < room.size(); i++) {
+		delete room[i];
+		room[i] = NULL;
+	}
+}
+
+// the actual game
+void Zuul::play() {
+		
+	// N = 0 E = 1 S = 2 W = 3
+	const char *directions[] = { "North", "East", "South", "West" };
+
+	// introduce game and share win conditions
+	cout << endl << "Welcome to the world of Zuul!" << endl;
+	cout << "This is a text-based adventure game based on Pokemon" << endl;
+	cout << "You can win by collecting all 8 badges and reaching the Pokemon League" << endl;
+	cout << "Enjoy your stay! - Alex Young" << endl << endl;
+
+	// start in new bark town
+	const Room *currentRoom = room[0];
+
+	// I will keep playing until i quit or win
 	bool cont = true;
 	while (cont) {
+		// you start each round by sharing the room
+		cout << endl;
+		cout << "You are in " << currentRoom->getName() << ", " << currentRoom->getInfo() << endl;
 		
-		char command[25] = "";
-		
-		char roomName[40];
-		char items[8][40];
-		//getRoomInfo(roomName, items);
-		//cout << "You are at " << getRoomName() << endl;
-		// need to get a room name and initialize it
-	
-		//for (int i = 0; i < 8; i++)
-		//cout << "In this town you can get the " << item.
-		
-		// if no items then say nothing
+		// check for win condition
+		int count = 0;
+		// if at the plateau
+		if (currentRoom == room[19]) {
+			//cout << "hi" << endl;
+			for (unsigned i = 0; i < inventory.size(); i++) {
+				// and all the items are in your inventory
+				if (NULL == inventory[i]->room) {
+					if (count == 7) {
+						// win!
+						cout << "You got all 8 badges and reached the elite four!" << endl;
+						cout << "Congratulations!!! You Won!";
+						cont = false;
+						return;
+					}
+					count++;
+				}
+			}
+		}
 
-		//cout << "The potential exits are ";
+		// print out items in the room
+		count = 0;
+		// check if items are in the same room as current room
+		for (unsigned i = 0; i < inventory.size(); i++) {
+			if (currentRoom == inventory[i]->room) {
+				// if so, print out the name of items
+				if (count == 0) {
+					cout << "Items in this room are: ";
+				} else {
+					cout << ", ";
+				}
+				cout << inventory[i]->name;
+				count++;
+			}
+		}
+		// if not, say so
+		if (count == 0) {
+			cout << "There are no items in this room.";
+		}
+
+		cout << endl;
 		
-		cout << "Your commands are: GO, INVENTORY, GET, DROP, QUIT" << endl;
+		// check if items are in your inventory
+		count = 0;
+		for (unsigned i = 0; i < inventory.size(); i++) {
+			if (NULL == inventory[i]->room) {
+				// if so, display them
+				if (count == 0) {
+					cout << "Items that you are carrying: ";
+				} else {
+					cout << ", ";
+				}
+				cout << inventory[i]->name;
+				count++;
+			}
+		}
+		// if not, say so
+		if (count == 0) {
+			cout << "You have no items.";
+		}
 		
-		cin.get(command, sizeof(command));
-		cin.get();
+		cout << endl;
+
+		// print out all the exits to the current room
+		count = 0;
+		// check all 4 directions, then check if the room has an exit in that direction
+		for (unsigned i = 0; i < 4; i++) {
+			if (currentRoom->getExit(i)) {
+				if (count == 0) {
+					cout << "The exits are: ";
+				} else {
+					cout << ", ";
+				}
+				cout << directions[i];
+				count++;
+			}
+		}
+		
+		if (count == 0) {
+			cout << "There are no exits. My bad, Game Over.";
+		}
+		
+		cout << endl;
+
+		// now the user will enter commands of go, get drop and quit
+		// I made the array size 40 because I was having issues with cin.get
+		char command[40] = "";
+		cout << "Your commands are: GO, GET, DROP, QUIT" << endl;
+		
+		cin >> command;
+		//cin.get(command, sizeof(command));
+		//cin.get();
 		
 		// if they want to go prompt for direction and change rooms
-		if (strcmp(command, "GO") == 0) {
+		// I also learned how to use strcasecmp for case insensitive comparison
+		if (strcasecmp(command, "GO") == 0) {
 			cout << "Which direction do you want to go?" << endl;
-			cin.get(command, strlen(command));
-			cin.get();
+			cin >> command;
+			//cin.get(command, strlen(command));
+			//cin.get();
+			for (unsigned i = 0; i < 4; i++) {
+				if (currentRoom->getExit(i)) {
+					if (strcasecmp(directions[i], command) == 0) {
+						currentRoom = currentRoom->getExit(i);
+					}
+				}
+			}
 			
 		}
 		
-		// if they want to open inventory show items
-		if (strcmp(command, "INVENTORY") == 0) {
-
-		}
-		
 		// if they want to get prompt for item and move it to inventory
-		if (strcmp(command, "GET") == 0) {
+		if (strcasecmp(command, "GET") == 0) {
+			count = 0;
+			for (unsigned i = 0; i < inventory.size(); i++) {
+				if (currentRoom == inventory[i]->room) {
+					if (count == 0) {
+						cout << "Which item do you want to pick up? ";
+						cin >> command;
+					}
 
+					if (strcasecmp(command, inventory[i]->name) == 0) {
+						inventory[i]->room = NULL;
+						cout << inventory[i]->description;
+					}
+					count++;
+				}
+			}
+			
+			if (count == 0) {
+				cout << "There are no items to get.";
+			}
+
+			cout << endl;
+			
 		}
 		
 		// if they want to drop prompt for item and move it to current room
-		if (strcmp(command, "DROP") == 0) {
+		if (strcasecmp(command, "DROP") == 0) {
+			count = 0;
+			for (unsigned i = 0; i < inventory.size(); i++) {
+				if (NULL == inventory[i]->room) {
+					if (count == 0) {
+						cout << "Which item do you want to drop? ";
+						cin >> command;
+					}
+
+					if (strcasecmp(command, inventory[i]->name) == 0) {
+						inventory[i]->room = currentRoom;
+					}
+					count++;
+				}
+			}
+			
+			if (count == 0) {
+				cout << "You have no items to drop.";
+			}
+			cout << endl;
 
 		}
 		
 		// if user quits they leave the game
-		if (strcmp(command, "QUIT") == 0) {
+		if (strcasecmp(command, "QUIT") == 0) {
 			cont = false;
 		}
 	}
 
-	return 0;
+	return;
 }
 
-// I will need a function to create items and stuffs
+// yipee
